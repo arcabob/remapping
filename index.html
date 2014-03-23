@@ -4,158 +4,192 @@ and open the template in the editor.
 -->
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
-    <meta charset="utf-8">
-    <title>County Map using Fusion Table Test</title>
-    <style>
-      html, body, #map-canvas {
-        height: 98%;
-        margin: 2px;
-        padding: 0px
-      }
-    </style>
-    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
-    <script>
-        var rectangle;
-        var map;
-        var infoWindow;
-        var regions = new Array();
-        var googleRectangles = new Array();
-
-function initialize() {
-    var chicago = new google.maps.LatLng(39.830033, -89.6400523);
-
-    map = new google.maps.Map(document.getElementById('map-canvas'), {
-        center: chicago,
-        zoom: 7,
-        mapTypeId: 'roadmap'
-        });
-
-
-    var layer = new google.maps.FusionTablesLayer({
-        query: {
-        select: 'geometry',
-        from: '1OoBTpAqkASRRnJ_tsUOiswz06-0r2Nc9ncxQM68',
-        where: "'State' = 'IL'"
-        },
-    });
-    layer.setMap(map);
-
-    rectangle = new google.maps.Rectangle({
-        strokeColor: '#FFFFFF',
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: '#FFFFFF',
-        fillOpacity: 0.35,
-        map: map,
-        editable: true,
-        bounds: new google.maps.LatLngBounds(
-        new google.maps.LatLng(36.9162409, -91.5803815),
-        new google.maps.LatLng(42.511217, -87.508214))
-        });
-
-        // Add an event listener on the rectangle.
-        google.maps.event.addListener(rectangle, 'bounds_changed', showNewRect);
-        infoWindow = new google.maps.InfoWindow();
-}
-
-    
-    function addLayer(){
-        var colCount = document.getElementById('colCount').value;
-        var rowCount = document.getElementById('rowCount').value;
-
-        var regionCount = rowCount * colCount;
-
-        
-        var ne = rectangle.getBounds().getNorthEast();
-        var sw = rectangle.getBounds().getSouthWest();
-        var latDiff = (ne.lat() - sw.lat()) / rowCount;
-        var longDiff = (Math.abs(sw.lng()) - Math.abs(ne.lng())) / colCount;
-        
-        var currentRegion = 0;
-        var startLat=0;
-        var startLng=0;
-        var endLat=0;
-        var endLng=0;
-
-        for(var iCurrentRow=0;iCurrentRow<rowCount;iCurrentRow++){
-            for(var iCurrentCol=0;iCurrentCol<colCount;iCurrentCol++){
-                startLat=sw.lat() + (iCurrentRow * latDiff);
-                startLng=-1 * (Math.abs(sw.lng()) - (iCurrentCol * longDiff));
-                
-                endLat=sw.lat() + ((iCurrentRow+1) * latDiff);
-                endLng=-1 * (Math.abs(sw.lng()) - ((iCurrentCol+1) * longDiff));
-                
-                regions[currentRegion] = new google.maps.LatLngBounds(
-                new google.maps.LatLng(startLat,startLng),
-                new google.maps.LatLng(endLat,endLng));
-                currentRegion++;
+    <head>
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+        <meta charset="utf-8">
+        <title>County Map using Fusion Table Test</title>
+        <style>
+            html, body, #map-canvas {
+                height: 98%;
+                margin: 2px;
+                padding: 0px
             }
-        }
+        </style>
+        <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+        <script>
+            var rectangle;
+            var map;
+            var infoWindow;
+            var regions = new Array();
+            var googleRectangles = new Array();
+            var xmlhttp;
 
-        for(var rectCount=0;rectCount<googleRectangles.length; rectCount++){
-            googleRectangles[rectCount].setMap(null);
-        }
-        googleRectangles.length=0;
+            function initialize() {
+                var chicago = new google.maps.LatLng(39.830033, -89.6400523);
+
+                map = new google.maps.Map(document.getElementById('map-canvas'), {
+                    center: chicago,
+                    zoom: 7,
+                    mapTypeId: 'roadmap'
+                });
+
+
+                var layer = new google.maps.FusionTablesLayer({
+                    query: {
+                        select: 'geometry',
+                        from: '1OoBTpAqkASRRnJ_tsUOiswz06-0r2Nc9ncxQM68',
+                        where: "'State' = 'IL'"
+                    },
+                });
+                layer.setMap(map);
+
+                rectangle = new google.maps.Rectangle({
+                    strokeColor: '#FFFFFF',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: '#FFFFFF',
+                    fillOpacity: 0.35,
+                    map: map,
+                    editable: true,
+                    bounds: new google.maps.LatLngBounds(
+                    new google.maps.LatLng(36.9162409, -91.5803815),
+                    new google.maps.LatLng(42.511217, -87.508214))
+                });
+
+                // Add an event listener on the rectangle.
+                google.maps.event.addListener(rectangle, 'bounds_changed', showNewRect);
+                infoWindow = new google.maps.InfoWindow();
+            }
             
-        for (var i=0; i<regions.length; ++i) {
-          googleRectangles[i] = new google.maps.Rectangle({
-              map: map,
-              bounds: regions[i],
-              strokeColor: "#000000",
-              strokeWeight: 2
-            });
+            function retPHPfunction()
+            {
+            
+                theD = document.getElementById("txtHint");
+                if(xmlhttp.readyState == 1){
+                    theD.innerHTML = "Status 1: Server connection established ! <br/>";
+                    }
+                else if(xmlhttp.readyState == 2){
+                    theD.innerHTML = "Status 2: Request recieved ! <br/>";
+                    }
+                else if(xmlhttp.readyState == 3){
+                    theD.innerHTML = "Status 3: Processing Request ! <br/>";
+                    }
+                else if(xmlhttp.readyState == 4){
 
-        }
-   }
-   
-   function showNewRect(event) {
-            var ne = rectangle.getBounds().getNorthEast();
-            var sw = rectangle.getBounds().getSouthWest();
+                if(xmlhttp.status == 200){
+                    var text = xmlhttp.responseText;
+                    theD.innerHTML = "Status 4: Processing Request ! <br/>";
+                    theD.innerHTML = text;
+                    }
+                else{
+                    alert("Something is wrong !");
+                    }
 
-            var contentString = '<b>Rectangle moved.</b><br>' +
+                }
+            }
+
+
+            function distributeRect(){
+                var colCount = document.getElementById('colCount').value;
+                var rowCount = document.getElementById('rowCount').value;
+
+                var regionCount = rowCount * colCount;
+
+
+                var ne = rectangle.getBounds().getNorthEast();
+                var sw = rectangle.getBounds().getSouthWest();
+                var latDiff = (ne.lat() - sw.lat()) / rowCount;
+                var longDiff = (Math.abs(sw.lng()) - Math.abs(ne.lng())) / colCount;
+
+                var currentRegion = 0;
+                var startLat=0;
+                var startLng=0;
+                var endLat=0;
+                var endLng=0;
+                
+                xmlhttp=new XMLHttpRequest();
+                xmlhttp.onreadystatechange=retPHPfunction;
+                xmlhttp.open("GET","getPop.php?slat="+startLat,true);    
+                xmlhttp.send();
+
+                for(var iCurrentRow=0;iCurrentRow<rowCount;iCurrentRow++){
+                    for(var iCurrentCol=0;iCurrentCol<colCount;iCurrentCol++){
+                        startLat=sw.lat() + (iCurrentRow * latDiff);
+                        startLng=-1 * (Math.abs(sw.lng()) - (iCurrentCol * longDiff));
+
+                        endLat=sw.lat() + ((iCurrentRow+1) * latDiff);
+                        endLng=-1 * (Math.abs(sw.lng()) - ((iCurrentCol+1) * longDiff));
+
+                        regions[currentRegion] = new google.maps.LatLngBounds(
+                        new google.maps.LatLng(startLat,startLng),
+                        new google.maps.LatLng(endLat,endLng));
+                        currentRegion++;
+                    }
+                }
+
+                for(var rectCount=0;rectCount<googleRectangles.length; rectCount++){
+                    googleRectangles[rectCount].setMap(null);
+                }
+                googleRectangles.length=0;
+
+                for (var i=0; i<regions.length; ++i) {
+                    googleRectangles[i] = new google.maps.Rectangle({
+                        map: map,
+                        bounds: regions[i],
+                        strokeColor: "#000000",
+                        strokeWeight: 2
+                    });
+
+                }
+            }
+
+            function showNewRect(event) {
+                var ne = rectangle.getBounds().getNorthEast();
+                var sw = rectangle.getBounds().getSouthWest();
+
+                var contentString = '<b>Rectangle moved.</b><br>' +
                 'New north-east corner: ' + ne.lat() + ', ' + ne.lng() + '<br>' +
                 'New south-west corner: ' + sw.lat() + ', ' + sw.lng();
 
-            // Set the info window's content and position.
-            infoWindow.setContent(contentString);
-            infoWindow.setPosition(ne);
+                // Set the info window's content and position.
+                infoWindow.setContent(contentString);
+                infoWindow.setPosition(ne);
 
-            infoWindow.open(map);
-          }
+                infoWindow.open(map);
+            }
 
 
-google.maps.event.addDomListener(window, 'load', initialize);
+            google.maps.event.addDomListener(window, 'load', initialize);
 
-    </script>
-  </head>
-  <body>
-    <div id="map-canvas"></div>
-    Row Count
-    <select id="rowCount">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        <option value="6">6</option>
-        <option value="7">7</option>
-        <option value="8">8</option>
-        <option value="9">9</option>
-    </select>
-    Column Count
-    <select id="colCount">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        <option value="6">6</option>
-        <option value="7">7</option>
-        <option value="8">8</option>
-        <option value="9">9</option>
-    </select>
-    <input type="button" value="Create Regions" onclick="addLayer();" >
-  </body>
+        </script>
+    </head>
+    <body>
+        <div id="map-canvas"></div>
+        Row Count
+        <select id="rowCount">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+        </select>
+        Column Count
+        <select id="colCount">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+        </select>
+        <input type="button" value="Create Regions" onclick="distributeRect();" >
+        <div id="txtHint"><b>Person info will be listed here.</b></div>
+    </body>
 </html>
