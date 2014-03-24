@@ -22,6 +22,8 @@ and open the template in the editor.
             var infoWindow;
             var regions = new Array();
             var googleRectangles = new Array();
+            
+            
             var xmlhttp;
 
             function initialize() {
@@ -33,7 +35,9 @@ and open the template in the editor.
                     mapTypeId: 'roadmap'
                 });
 
-
+                xmlhttp=new XMLHttpRequest();
+                xmlhttp.onreadystatechange=retPHPfunction;
+                
                 var layer = new google.maps.FusionTablesLayer({
                     query: {
                         select: 'geometry',
@@ -60,29 +64,36 @@ and open the template in the editor.
                 google.maps.event.addListener(rectangle, 'bounds_changed', showNewRect);
                 infoWindow = new google.maps.InfoWindow();
             }
-            
+
             function retPHPfunction()
             {
-            
+
                 theD = document.getElementById("txtHint");
                 if(xmlhttp.readyState == 1){
                     theD.innerHTML = "Status 1: Server connection established ! <br/>";
-                    }
+                }
                 else if(xmlhttp.readyState == 2){
                     theD.innerHTML = "Status 2: Request recieved ! <br/>";
-                    }
+                }
                 else if(xmlhttp.readyState == 3){
                     theD.innerHTML = "Status 3: Processing Request ! <br/>";
-                    }
+                }
                 else if(xmlhttp.readyState == 4){
 
-                if(xmlhttp.status == 200){
-                    var text = xmlhttp.responseText;
-                    theD.innerHTML = "Status 4: Processing Request ! <br/>";
-                    theD.innerHTML = text;
+                    if(xmlhttp.status == 200){
+                        var text = xmlhttp.responseText;
+                        theD.innerHTML = "Status 4: Processing Request ! <br/>";
+                        theD.innerHTML = text;
+                            
+                        var contentString = 'pop is ' + text+20;
+                        infoWindow.setContent(contentString);
+                        var ne = googleRectangles[text][0].rect.getBounds().getNorthEast();
+                        infoWindow.setPosition(ne);
+
+                        infoWindow.open(map);
                     }
-                else{
-                    alert("Something is wrong !");
+                    else{
+                        alert("Something is wrong !");
                     }
 
                 }
@@ -92,10 +103,7 @@ and open the template in the editor.
             function distributeRect(){
                 var colCount = document.getElementById('colCount').value;
                 var rowCount = document.getElementById('rowCount').value;
-
                 var regionCount = rowCount * colCount;
-
-
                 var ne = rectangle.getBounds().getNorthEast();
                 var sw = rectangle.getBounds().getSouthWest();
                 var latDiff = (ne.lat() - sw.lat()) / rowCount;
@@ -107,11 +115,19 @@ and open the template in the editor.
                 var endLat=0;
                 var endLng=0;
                 
-                xmlhttp=new XMLHttpRequest();
-                xmlhttp.onreadystatechange=retPHPfunction;
-                xmlhttp.open("GET","getPop.php?slat="+startLat,true);    
-                xmlhttp.send();
+                
+                for(var rectCount=0;rectCount<googleRectangles.length; rectCount++){
+                    alert(rectCount);
+                    google.maps.event.clearListeners(googleRectangles[rectCount][0].rect, 'click');
+                    googleRectangles[rectCount][0].rect.pop().setMap(null);
+                    googleRectangles[rectCount][0].rect.setVisible=(false);
+                    googleRectangles[rectCount][0].rect=null;
+                }
+                
+                googleRectangles= new Array();
 
+                //initialize();
+                
                 for(var iCurrentRow=0;iCurrentRow<rowCount;iCurrentRow++){
                     for(var iCurrentCol=0;iCurrentCol<colCount;iCurrentCol++){
                         startLat=sw.lat() + (iCurrentRow * latDiff);
@@ -127,22 +143,34 @@ and open the template in the editor.
                     }
                 }
 
-                for(var rectCount=0;rectCount<googleRectangles.length; rectCount++){
-                    googleRectangles[rectCount].setMap(null);
-                }
-                googleRectangles.length=0;
-
+                
                 for (var i=0; i<regions.length; ++i) {
-                    googleRectangles[i] = new google.maps.Rectangle({
+                    googleRectangles[i] = new Array(2);
+                    googleRectangles[i][0] = {
+                        rect: new google.maps.Rectangle({
                         map: map,
                         bounds: regions[i],
                         strokeColor: "#000000",
-                        strokeWeight: 2
-                    });
-
+                        strokeWeight: 2,
+                        zIndex:regions.length,
+                        clickable:true
+                    }),
+                    pop: i};
+                    
+                    addClickListener(googleRectangles[i][0]);
+                    
                 }
+                
             }
 
+            function addClickListener(rectObj) {
+                google.maps.event.addListener(rectObj.rect, 'click', function() {
+                    xmlhttp.open("GET","getPop.php?indexRect="+rectObj.pop,true);    
+                    xmlhttp.send();
+                   
+                });
+            }
+            
             function showNewRect(event) {
                 var ne = rectangle.getBounds().getNorthEast();
                 var sw = rectangle.getBounds().getSouthWest();
@@ -157,8 +185,7 @@ and open the template in the editor.
 
                 infoWindow.open(map);
             }
-
-
+            
             google.maps.event.addDomListener(window, 'load', initialize);
 
         </script>
@@ -190,6 +217,6 @@ and open the template in the editor.
             <option value="9">9</option>
         </select>
         <input type="button" value="Create Regions" onclick="distributeRect();" >
-        <div id="txtHint"><b>Person info will be listed here.</b></div>
+        <div id="txtHint"><b></b></div>
     </body>
 </html>
