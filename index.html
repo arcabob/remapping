@@ -84,12 +84,12 @@ and open the template in the editor.
                         var text = xmlhttp.responseText;
                         theD.innerHTML = "Status 4: Processing Request ! <br/>";
                         theD.innerHTML = text;
-                            
-                        var contentString = 'pop is ' + text+20;
+                        
+                        var contentString = 'population is ' + text.toString();
                         infoWindow.setContent(contentString);
-                        var ne = googleRectangles[text][0].rect.getBounds().getNorthEast();
+                        //var ne = googleRectangles[text][0].rect.getBounds().getNorthEast();
+                        var ne = rectangle.getBounds().getNorthEast();
                         infoWindow.setPosition(ne);
-
                         infoWindow.open(map);
                     }
                     else{
@@ -165,7 +165,10 @@ and open the template in the editor.
 
             function addClickListener(rectObj) {
                 google.maps.event.addListener(rectObj.rect, 'click', function() {
-                    xmlhttp.open("GET","getPop.php?indexRect="+rectObj.pop,true);    
+                    var ne = rectObj.rect.getBounds().getNorthEast();
+                    var sw = rectObj.rect.getBounds().getSouthWest();
+                    
+                    xmlhttp.open("GET","getPop.php?indexRect="+rectObj.pop+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);    
                     xmlhttp.send();
                    
                 });
