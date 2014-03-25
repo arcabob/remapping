@@ -6,6 +6,7 @@ $swlng = number_format($_GET['swlng'],10);
 $nelat = number_format($_GET['nelat'],10);
 $nelng = number_format($_GET['nelng'],10);
 
+echo $indexRect.";";
 
 $con = mysqli_connect("127.0.0.1","mapuser","arcabob1","map");
 if (mysqli_connect_errno())

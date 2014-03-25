@@ -84,11 +84,12 @@ and open the template in the editor.
                         var text = xmlhttp.responseText;
                         theD.innerHTML = "Status 4: Processing Request ! <br/>";
                         theD.innerHTML = text;
+                        var retCodes = text.split(";");
                         
-                        var contentString = 'population is ' + text.toString();
+                        var contentString = 'population is ' + retCodes[1];
                         infoWindow.setContent(contentString);
-                        //var ne = googleRectangles[text][0].rect.getBounds().getNorthEast();
-                        var ne = rectangle.getBounds().getNorthEast();
+                        var ne = googleRectangles[retCodes[0]][0].rect.getBounds().getNorthEast();
+                        //var ne = rectangle.getBounds().getNorthEast();
                         infoWindow.setPosition(ne);
                         infoWindow.open(map);
                     }
@@ -117,9 +118,9 @@ and open the template in the editor.
                 
                 
                 for(var rectCount=0;rectCount<googleRectangles.length; rectCount++){
-                    alert(rectCount);
+                    
                     google.maps.event.clearListeners(googleRectangles[rectCount][0].rect, 'click');
-                    googleRectangles[rectCount][0].rect.pop().setMap(null);
+                    googleRectangles[rectCount][0].rect.setMap(null);
                     googleRectangles[rectCount][0].rect.setVisible=(false);
                     googleRectangles[rectCount][0].rect=null;
                 }
