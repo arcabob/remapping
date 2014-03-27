@@ -22,10 +22,23 @@ and open the template in the editor.
             var infoWindow;
             var regions = new Array();
             var googleRectangles = new Array();
+            var xmlHTTPgetPOP;
+            var xmlHTTPgetNewRegions;
             
+            function clearMap(){
+                for(var rectCount=0;rectCount<googleRectangles.length; rectCount++){
+                    
+                    google.maps.event.clearListeners(googleRectangles[rectCount][0].rect, 'click');
+                    googleRectangles[rectCount][0].rect.setMap(null);
+                    googleRectangles[rectCount][0].rect.setVisible=(false);
+                    googleRectangles[rectCount][0].rect=null;
+                }
+                
+                googleRectangles= new Array();
+                rectangle.setVisible(true);
+                regions= new Array();
+            }
             
-            var xmlhttp;
-
             function initialize() {
                 var chicago = new google.maps.LatLng(39.830033, -89.6400523);
 
@@ -35,8 +48,11 @@ and open the template in the editor.
                     mapTypeId: 'roadmap'
                 });
 
-                xmlhttp=new XMLHttpRequest();
-                xmlhttp.onreadystatechange=retPHPfunction;
+                xmlHTTPgetPOP=new XMLHttpRequest();
+                xmlHTTPgetPOP.onreadystatechange=returnPopulation;
+                xmlHTTPgetNewRegions=new XMLHttpRequest();
+                xmlHTTPgetNewRegions.onreadystatechange=returnRegions;
+                
                 
                 var layer = new google.maps.FusionTablesLayer({
                     query: {
@@ -47,6 +63,7 @@ and open the template in the editor.
                 });
                 layer.setMap(map);
 
+                
                 rectangle = new google.maps.Rectangle({
                     strokeColor: '#FFFFFF',
                     strokeOpacity: 0.8,
@@ -59,44 +76,44 @@ and open the template in the editor.
                     new google.maps.LatLng(36.9162409, -91.5803815),
                     new google.maps.LatLng(42.511217, -87.508214))
                 });
-
+                
+               
                 // Add an event listener on the rectangle.
                 google.maps.event.addListener(rectangle, 'bounds_changed', showNewRect);
                 infoWindow = new google.maps.InfoWindow();
             }
 
-            function retPHPfunction()
+            function returnPopulation()
             {
 
-                theD = document.getElementById("txtHint");
-                if(xmlhttp.readyState == 1){
-                    theD.innerHTML = "Status 1: Server connection established ! <br/>";
-                }
-                else if(xmlhttp.readyState == 2){
-                    theD.innerHTML = "Status 2: Request recieved ! <br/>";
-                }
-                else if(xmlhttp.readyState == 3){
-                    theD.innerHTML = "Status 3: Processing Request ! <br/>";
-                }
-                else if(xmlhttp.readyState == 4){
-
-                    if(xmlhttp.status == 200){
-                        var text = xmlhttp.responseText;
-                        theD.innerHTML = "Status 4: Processing Request ! <br/>";
-                        theD.innerHTML = text;
+                if(xmlHTTPgetPOP.readyState == 4){
+                    if(xmlHTTPgetPOP.status == 200){
+                        var text = xmlHTTPgetPOP.responseText;
                         var retCodes = text.split(";");
                         
                         var contentString = 'population is ' + retCodes[1];
                         infoWindow.setContent(contentString);
                         var ne = googleRectangles[retCodes[0]][0].rect.getBounds().getNorthEast();
-                        //var ne = rectangle.getBounds().getNorthEast();
                         infoWindow.setPosition(ne);
                         infoWindow.open(map);
                     }
                     else{
                         alert("Something is wrong !");
                     }
+                }
+            }
+            
+            function returnRegions()
+            {
 
+                if(xmlHTTPgetNewRegions.readyState == 4){
+                    if(xmlHTTPgetNewRegions.status == 200){
+                        var text = xmlHTTPgetNewRegions.responseText;
+                      
+                    }
+                    else{
+                        //alert("Something is wrong !");
+                    }
                 }
             }
 
@@ -117,15 +134,8 @@ and open the template in the editor.
                 var endLng=0;
                 
                 
-                for(var rectCount=0;rectCount<googleRectangles.length; rectCount++){
-                    
-                    google.maps.event.clearListeners(googleRectangles[rectCount][0].rect, 'click');
-                    googleRectangles[rectCount][0].rect.setMap(null);
-                    googleRectangles[rectCount][0].rect.setVisible=(false);
-                    googleRectangles[rectCount][0].rect=null;
-                }
-                
-                googleRectangles= new Array();
+                clearMap();
+                rectangle.setVisible(false);
 
                 //initialize();
                 
@@ -163,14 +173,26 @@ and open the template in the editor.
                 }
                 
             }
+            
+            function getNewRegions(){
+                var colCount = document.getElementById('colCount').value;
+                var rowCount = document.getElementById('rowCount').value;
+                
+                var ne = rectangle.getBounds().getNorthEast();
+                var sw = rectangle.getBounds().getSouthWest();
+                    
+                xmlHTTPgetNewRegions.open("GET","getNewRegions.php?colCount="+colCount+"&rowCount="+rowCount+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);
+                xmlHTTPgetNewRegions.send();
+                   
+            }
 
             function addClickListener(rectObj) {
                 google.maps.event.addListener(rectObj.rect, 'click', function() {
                     var ne = rectObj.rect.getBounds().getNorthEast();
                     var sw = rectObj.rect.getBounds().getSouthWest();
                     
-                    xmlhttp.open("GET","getPop.php?indexRect="+rectObj.pop+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);    
-                    xmlhttp.send();
+                    xmlHTTPgetPOP.open("GET","getPop.php?indexRect="+rectObj.pop+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);    
+                    xmlHTTPgetPOP.send();
                    
                 });
             }
@@ -221,6 +243,7 @@ and open the template in the editor.
             <option value="9">9</option>
         </select>
         <input type="button" value="Create Regions" onclick="distributeRect();" >
-        <div id="txtHint"></div>
+        <input type="button" value="Clear Map" onclick="clearMap();" >
+        <input type="button" value="Setup New Regions" onclick="getNewRegions();" >
     </body>
 </html>
