@@ -37,28 +37,92 @@ $row = $result->fetch_assoc();
 $totalPopulation = $row['pop'];
 $popPerRegion = intval(($totalPopulation) / ($colCount * $rowCount));
 $totalRegionCount = ($colCount * $rowCount);
-$handler->debug('population,popper,totalregion', $totalPopulation .' ' .$popPerRegion.' '.$totalRegionCount);
+$latPerRow = ($nelat-$swlat) / $rowCount; 
+$handler->debug('population,popper,totalregion,latperrow', $totalPopulation .' ' .$popPerRegion.' '.$totalRegionCount.' '.$latPerRow);
+$currentRow=1;
+
+$polygons = array();
 
 if($startBottemLeft){
-    $startBottom=$swlat;
-    $startTop=$nelat;
+    $currentLat=$swlat;
+    $currentLng=$swlng;
     $movingRight=TRUE;
+}else{
+    $currentLat=$swlat;
+    $currentLng=$nwlng;
+    $movingRight=FALSE;
 }
 
-for($curRegion=0; $curRegion < $totalRegionCount+1;$curRegion++){
+for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
     $newPopPerRegion=0;
+    $polygons[$curRegion]=array();
+    $apoints = array();
     
+    $strLatLong=strval($currentLat).';'.strval($currentLng);
+    array_push($apoints, $strLatLong);
+    
+    $filledRegion=FALSE;
+    $rowSpan=1;
+    
+    while(!$filledRegion){
+        if($movingRight){
+            $sql="SELECT *  FROM censusPopulation where intlat between ".strval($currentLat+(($rowSpan-1)*$latPerRow))." and ".strval($currentLat+($rowSpan*$latPerRow))." order by intlong asc;";
+        }else{
+            $sql="SELECT *  FROM censusPopulation where intlat between ".strval($currentLat+(($rowSpan-1)*$latPerRow))." and ".strval($currentLat+($rowSpan*$latPerRow))." order by intlong desc;";
+        }
+        $handler->debug('sql', $sql);
+        $result = mysqli_query($con,$sql);
+        while($row = mysqli_fetch_array($result))
+        {
+            $newPopPerRegion += $row['pop10'];
+            $newlng=$row['intlong'];
+            
+            if($newPopPerRegion>$popPerRegion){
+                $strLatLong=strval($currentLat).';'.strval($newlng);
+                array_push($apoints, $strLatLong);
+                $strLatLong=strval($currentLat+($rowSpan*$latPerRow)).';'.strval($newlng);
+                array_push($apoints, $strLatLong);
+                if($rowSpan=1){
+                    $strLatLong=strval($currentLat+($latPerRow)).';'.strval($currentLng);
+                    array_push($apoints, $strLatLong);
+                }else{
+                    $strLatLong=strval($currentLat+($latPerRow*$rowSpan)).';'.strval($newlng);
+                    array_push($apoints, $strLatLong);
+                    $strLatLong=strval($currentLat+($latPerRow)).';'.strval($newlng);
+                    array_push($apoints, $strLatLong);
+                    $strLatLong=strval($currentLat+($latPerRow)).';'.strval($currentLng);
+                    array_push($apoints, $strLatLong);
+                }
+                $currentLat=$currentLat+($rowSpan*$latPerRow);
+                $currentLng=$newlng;
+                $filledRegion=TRUE;
+                $handler->debug('filled region', $currentLat .' ' .$currentLng);
+                break 2;
+            }
+        }
+        $rowSpan++;
+        if($rowSpan>4){
+            break;
+        }
+        $currentRow++;
+        $movingRight=!$movingRight;
+        
+    }
+    
+    
+    $polygons[$curRegion][0]=$curRegion;
+    $polygons[$curRegion][1]=$apoints;
     
 }
 
 /*
-while($row = mysqli_fetch_array($result))
-{
-    $totalPopulation = $row['pop'];
-      
-}
+
 */
-echo $totalPopulation;
 mysqli_close($con);
+
+echo json_encode($polygons);
+
+
+
 
 ?>
