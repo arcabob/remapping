@@ -16,6 +16,7 @@ and open the template in the editor.
             }
         </style>
         <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+        <script src="js/json2.js"></script>
         <script>
             var rectangle;
             var map;
@@ -109,8 +110,8 @@ and open the template in the editor.
                 if(xmlHTTPgetNewRegions.readyState == 4){
                     if(xmlHTTPgetNewRegions.status == 200){
                         var text = xmlHTTPgetNewRegions.responseText;
-                        //var obj = JSON.parse(text);
-                        //var count = obj.count;
+                        var JSONObject = JSON.parse(text);
+                        var count = 3;
                     }
                     else{
                         //alert("Something is wrong !");
