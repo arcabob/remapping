@@ -12,7 +12,9 @@ and open the template in the editor.
             html, body, #map-canvas {
                 height: 98%;
                 margin: 2px;
-                padding: 0px
+                padding: 0px;
+                font-family: arial;
+                font-size: small
             }
         </style>
         <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
@@ -23,8 +25,10 @@ and open the template in the editor.
             var infoWindow;
             var regions = new Array();
             var googleRectangles = new Array();
+            var googlePolygons = new Array();
             var xmlHTTPgetPOP;
             var xmlHTTPgetNewRegions;
+            var mouseLatLng;
             
             function clearMap(){
                 for(var rectCount=0;rectCount<googleRectangles.length; rectCount++){
@@ -33,11 +37,21 @@ and open the template in the editor.
                     googleRectangles[rectCount][0].rect.setMap(null);
                     googleRectangles[rectCount][0].rect.setVisible=(false);
                     googleRectangles[rectCount][0].rect=null;
-                }
-                
+                }                
                 googleRectangles= new Array();
+                
+                for(var polyCount=0;polyCount<googlePolygons.length; polyCount++){
+                    
+                    //google.maps.event.clearListeners(googlePolygons[polyCount][0].poly, 'click');
+                    googlePolygons[polyCount][0].poly.setMap(null);
+                    googlePolygons[polyCount][0].poly.setVisible=(false);
+                    //googlePolygons[polyCount][0].poly=null;
+                }                
+                googlePolygons= new Array();
+                
                 rectangle.setVisible(true);
                 regions= new Array();
+                infoWindow.close();
             }
             
             function initialize() {
@@ -61,6 +75,11 @@ and open the template in the editor.
                         from: '1OoBTpAqkASRRnJ_tsUOiswz06-0r2Nc9ncxQM68',
                         where: "'State' = 'IL'"
                     },
+                    styles: [{
+                    polygonOptions: {
+                      fillColor: '#00FF00',
+                      fillOpacity: 0.55
+                    }}]
                 });
                 layer.setMap(map);
 
@@ -82,6 +101,7 @@ and open the template in the editor.
                 // Add an event listener on the rectangle.
                 google.maps.event.addListener(rectangle, 'bounds_changed', showNewRect);
                 infoWindow = new google.maps.InfoWindow();
+                
             }
 
             function returnPopulation()
@@ -95,7 +115,7 @@ and open the template in the editor.
                         var contentString = 'population is ' + retCodes[1];
                         infoWindow.setContent(contentString);
                         var ne = googleRectangles[retCodes[0]][0].rect.getBounds().getNorthEast();
-                        infoWindow.setPosition(ne);
+                        infoWindow.setPosition(ne); 
                         infoWindow.open(map);
                     }
                     else{
@@ -111,7 +131,7 @@ and open the template in the editor.
                     if(xmlHTTPgetNewRegions.status == 200){
                         var text = xmlHTTPgetNewRegions.responseText;
                         var JSONObject = JSON.parse(text);
-                        var count = 3;
+                        distributePoly(JSONObject);
                     }
                     else{
                         //alert("Something is wrong !");
@@ -120,6 +140,45 @@ and open the template in the editor.
             }
 
 
+            function distributePoly(regions){
+                clearMap();
+                rectangle.setVisible(false);
+                
+                for (var i=0; i<regions.length; ++i) {
+                //for (var i=1; i<2; ++i) {
+                    var strIndexPop = regions[i][0];
+                    var indexPopArray = strIndexPop.split(";");
+                    var triangleCoords=new Array();
+                    var regionArray = regions[i][1];
+                    for(var j=0;j<regionArray.length;j++){
+                        strLatLng = regionArray[j];
+                        latLngArray = strLatLng.split(";");
+                        var latlng = new google.maps.LatLng(latLngArray[0], latLngArray[1]);
+                        triangleCoords.push(latlng);
+                    }
+                      
+                    strColor = getRandomColor();
+                    googlePolygons[i] = new Array(2);
+                    googlePolygons[i][0] = {
+                        poly: new google.maps.Polygon({
+                        paths: triangleCoords,
+                        map: map,
+                        strokeColor: '#000000',
+                        strokeOpacity: 0.8,
+                        strokeWeight: 2,
+                        fillColor: strColor,
+                        fillOpacity: 0.45,
+                        clickable:true
+                      }),
+                    pop: indexPopArray[1]};
+                    
+                    addPolyClickListener(googlePolygons[i][0]);
+                    
+                }
+                
+                
+            }
+            
             function distributeRect(){
                 var colCount = document.getElementById('colCount').value;
                 var rowCount = document.getElementById('rowCount').value;
@@ -139,7 +198,6 @@ and open the template in the editor.
                 clearMap();
                 rectangle.setVisible(false);
 
-                //initialize();
                 
                 for(var iCurrentRow=0;iCurrentRow<rowCount;iCurrentRow++){
                     for(var iCurrentCol=0;iCurrentCol<colCount;iCurrentCol++){
@@ -179,11 +237,12 @@ and open the template in the editor.
             function getNewRegions(){
                 var colCount = document.getElementById('colCount').value;
                 var rowCount = document.getElementById('rowCount').value;
+                var strStart = document.getElementById("start").checked;
                 
                 var ne = rectangle.getBounds().getNorthEast();
                 var sw = rectangle.getBounds().getSouthWest();
                     
-                xmlHTTPgetNewRegions.open("GET","getNewRegions.php?colCount="+colCount+"&rowCount="+rowCount+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);
+                xmlHTTPgetNewRegions.open("GET","getNewRegions.php?start="+strStart+"&colCount="+colCount+"&rowCount="+rowCount+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);
                 xmlHTTPgetNewRegions.send();
                    
             }
@@ -196,6 +255,25 @@ and open the template in the editor.
                     xmlHTTPgetPOP.open("GET","getPop.php?indexRect="+rectObj.pop+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);    
                     xmlHTTPgetPOP.send();
                    
+                });
+            }
+            
+            function numberWithCommas(x) {
+                var parts = x.toString().split(".");
+                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                return parts.join(".");
+            }
+            
+            function addPolyClickListener(polyObj) {
+                google.maps.event.addListener(polyObj.poly, 'click', function() {
+                    var ne = polyObj.poly.getPath();  
+                    var ipop = polyObj.pop;
+                    var contentString = 'population is ' + numberWithCommas(ipop);
+                    infoWindow.setContent(contentString);
+                    var position = ne.j[0];
+                    
+                    infoWindow.setPosition(new google.maps.LatLng(position.k,position.A)); 
+                    infoWindow.open(map);
                 });
             }
             
@@ -214,12 +292,23 @@ and open the template in the editor.
                 infoWindow.open(map);
             }
             
+            function getMousePointer(e){
+                mouseLatLng = e.latLng;
+            }
+            
+            function getRandomColor(){
+                return '#'+Math.floor(Math.random()*16777215).toString(16);
+            }
+            
             google.maps.event.addDomListener(window, 'load', initialize);
+            //google.map.addEventListener(MapMouseEvent.MOUSE_MOVE, getMousePointer);
+                
 
         </script>
     </head>
     <body>
-        <div id="map-canvas"></div>
+        
+        <input type="button" value="Clear Map" onclick="clearMap();" >
         Row Count
         <select id="rowCount">
             <option value="1">1</option>
@@ -244,8 +333,10 @@ and open the template in the editor.
             <option value="8">8</option>
             <option value="9">9</option>
         </select>
-        <input type="button" value="Create Regions" onclick="distributeRect();" >
-        <input type="button" value="Clear Map" onclick="clearMap();" >
+        
+        <input type="button" value="Create Regions" onclick="distributeRect();" >        
         <input type="button" value="Setup New Regions" onclick="getNewRegions();" >
+        <input type="checkbox" id="start" name="start" value="left">Start Bottom Left
+        <div id="map-canvas"></div>
     </body>
 </html>

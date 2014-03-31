@@ -8,6 +8,7 @@ $handler->getConnector()->setSourcesBasePath($_SERVER['DOCUMENT_ROOT']); // so f
 
 
 //Get all vars passed
+$strStart = $_GET['start'];
 $colCount = intval($_GET['colCount']);
 $rowCount = intval($_GET['rowCount']);
 $swlat = number_format($_GET['swlat'],10);
@@ -15,8 +16,18 @@ $swlng = number_format($_GET['swlng'],10);
 $nelat = number_format($_GET['nelat'],10);
 $nelng = number_format($_GET['nelng'],10);
 
-$startBottemLeft = TRUE;
 
+//$handler->debug('start', $strStart);
+
+if($strStart=="true"){
+    $startBottemLeft = TRUE;
+    
+}else{
+    $startBottemLeft = FALSE;
+}
+    
+
+//
 //setup connection
 $con = mysqli_connect("127.0.0.1","mapuser","arcabob1","map");
 
@@ -61,7 +72,7 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
     $newPopPerRegion=0;
     $polygons[$curRegion]=array();
     $apoints = array();
-    
+    //1st point
     $strLatLong=strval($currentLat).';'.strval($currentLng);
     array_push($apoints, $strLatLong);
     
@@ -70,9 +81,9 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
     
     while(!$filledRegion){
         if($movingRight){
-            $sql="SELECT *  FROM censusPopulation where intlat between ".strval($currentLat+(($rowSpan-1)*$latPerRow))." and ".strval($currentLat+($rowSpan*$latPerRow))." and intlong > ".strval($currentLng)." order by intlong asc;";
+            $sql="SELECT pop10,intlong FROM censusPopulation where intlat between ".strval($currentLat+(($rowSpan-1)*$latPerRow))." and ".strval($currentLat+($rowSpan*$latPerRow))." and intlong > ".strval($currentLng)." union select 0,".$nelng." order by intlong asc;";
         }else{
-            $sql="SELECT *  FROM censusPopulation where intlat between ".strval($currentLat+(($rowSpan-1)*$latPerRow))." and ".strval($currentLat+($rowSpan*$latPerRow))." and intlong < ".strval($currentLng)." order by intlong desc;";
+            $sql="SELECT pop10,intlong FROM censusPopulation where intlat between ".strval($currentLat+(($rowSpan-1)*$latPerRow))." and ".strval($currentLat+($rowSpan*$latPerRow))." and intlong < ".strval($currentLng)." union select 0,".$swlng." order by intlong desc;";
         }
         //$handler->debug('sql', $sql);
         $result = mysqli_query($con,$sql);
@@ -83,33 +94,86 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
             $newPopPerRegion += $row['pop10'];
             $newlng=$row['intlong'];
             
-            if($newPopPerRegion>$popPerRegion || ((++$counter == $numResults) && $curRegion == ($totalRegionCount-1))){                
-                if($rowSpan==1){
+            if($newPopPerRegion>$popPerRegion || ((++$counter == $numResults) && $curRegion == ($totalRegionCount-1))){   
+                //set the final end to the end of the rectangle                
+                if($curRegion == ($totalRegionCount-1)){
+                    if($startedRight){
+                        $newlng = $nelng;
+                    }else{
+                        $newlng = $swlng;
+                    }
+                }
+                
+                if($rowSpan==1){                    
                     $strLatLong=strval($currentLat).';'.strval($newlng);
                     array_push($apoints, $strLatLong);
                     $strLatLong=strval($currentLat+($rowSpan*$latPerRow)).';'.strval($newlng);
                     array_push($apoints, $strLatLong);
                     $strLatLong=strval($currentLat+($latPerRow)).';'.strval($currentLng);
                     array_push($apoints, $strLatLong);
+                    
                 }else{
                     if($startedRight){
+                        //2nd point
                         $strLatLong=strval($currentLat).';'.strval($nelng);
                         array_push($apoints, $strLatLong);
-                        $strLatLong=strval($currentLat+($latPerRow*$rowSpan)).';'.strval($nelng);
-                        array_push($apoints, $strLatLong);
+                        //3rd point
+                        if($rowSpan==2){
+                            $strLatLong=strval($currentLat+($latPerRow*$rowSpan)).';'.strval($nelng);
+                            array_push($apoints, $strLatLong);
+                        }else{
+                            $strLatLong=strval($currentLat+($latPerRow*($rowSpan-1))).';'.strval($nelng);
+                            array_push($apoints, $strLatLong);
+                        }
                     
                     }else{
+                        //2nd point
                         $strLatLong=strval($currentLat).';'.strval($swlng);
                         array_push($apoints, $strLatLong);
-                        $strLatLong=strval($currentLat+($latPerRow*$rowSpan)).';'.strval($swlng);
-                        array_push($apoints, $strLatLong);
+                        //3rd point
+                        if($rowSpan==2){
+                            $strLatLong=strval($currentLat+($latPerRow*$rowSpan)).';'.strval($swlng);
+                            array_push($apoints, $strLatLong);
+                        }else{
+                            $strLatLong=strval($currentLat+($latPerRow*($rowSpan-1))).';'.strval($swlng);
+                            array_push($apoints, $strLatLong);
+                        }
                     }
-                    $strLatLong=strval($currentLat+($latPerRow*$rowSpan)).';'.strval($newlng);
-                    array_push($apoints, $strLatLong);
-                    $strLatLong=strval($currentLat+($latPerRow*($rowSpan-1))).';'.strval($newlng);
-                    array_push($apoints, $strLatLong);
-                    $strLatLong=strval($currentLat+($latPerRow*($rowSpan-1))).';'.strval($originalLng);
-                    array_push($apoints, $strLatLong);
+                    if($rowSpan==2){
+                        //4th point
+                        $strLatLong=strval($currentLat+($latPerRow*$rowSpan)).';'.strval($newlng);
+                        array_push($apoints, $strLatLong);
+                        $strLatLong=strval($currentLat+($latPerRow*($rowSpan-1))).';'.strval($newlng);
+                        array_push($apoints, $strLatLong);
+                        $strLatLong=strval($currentLat+($latPerRow*($rowSpan-1))).';'.strval($originalLng);
+                        array_push($apoints, $strLatLong);
+                    }else{
+                        //4th point
+                        $strLatLong=strval($currentLat+($latPerRow*($rowSpan-1))).';'.strval($newlng);
+                        array_push($apoints, $strLatLong);
+                        //5th
+                        $strLatLong=strval($currentLat+($latPerRow*$rowSpan)).';'.strval($newlng);
+                        array_push($apoints, $strLatLong);
+                        if($startedRight){
+                            //6th
+                            $strLatLong=strval($currentLat+($latPerRow*($rowSpan))).';'.strval($swlng);
+                            array_push($apoints, $strLatLong);
+                            //7th
+                            $strLatLong=strval($currentLat+($latPerRow*($rowSpan-2))).';'.strval($swlng);
+                            array_push($apoints, $strLatLong);
+                        }else{
+                            //6th
+                            $strLatLong=strval($currentLat+($latPerRow*($rowSpan))).';'.strval($nelng);
+                            array_push($apoints, $strLatLong);
+                            //7th
+                            $strLatLong=strval($currentLat+($latPerRow*($rowSpan-2))).';'.strval($nelng);
+                            array_push($apoints, $strLatLong);
+                        }
+                        //8th                    
+                        $strLatLong=strval($currentLat+($latPerRow*($rowSpan-2))).';'.strval($originalLng);                        
+                        array_push($apoints, $strLatLong);
+                        
+                    }
                 }
                 $currentLat=$currentLat+(($rowSpan-1)*$latPerRow);
                 $currentLng=$newlng;
@@ -134,7 +198,7 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
     
     $startedRight=$movingRight;
     $originalLng=$currentLng;
-    $polygons[$curRegion][0]=strval($curRegion).';'.strval($newPopPerRegion);
+    $polygons[$curRegion][0]=strval($curRegion).';'.strval($newPopPerRegion).';'.strval($rowSpan);
     $polygons[$curRegion][1]=$apoints;
     
 }
