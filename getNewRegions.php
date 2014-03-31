@@ -118,7 +118,7 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
                         $strLatLong=strval($currentLat).';'.strval($nelng);
                         array_push($apoints, $strLatLong);
                         //3rd point
-                        if($rowSpan==2){
+                        if($rowSpan==2||$rowSpan==4||$rowSpan==6){
                             $strLatLong=strval($currentLat+($latPerRow*$rowSpan)).';'.strval($nelng);
                             array_push($apoints, $strLatLong);
                         }else{
@@ -131,7 +131,7 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
                         $strLatLong=strval($currentLat).';'.strval($swlng);
                         array_push($apoints, $strLatLong);
                         //3rd point
-                        if($rowSpan==2){
+                        if($rowSpan==2||$rowSpan==4||$rowSpan==6){
                             $strLatLong=strval($currentLat+($latPerRow*$rowSpan)).';'.strval($swlng);
                             array_push($apoints, $strLatLong);
                         }else{
@@ -139,14 +139,35 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
                             array_push($apoints, $strLatLong);
                         }
                     }
-                    if($rowSpan==2){
+                    if($rowSpan==2||$rowSpan==4||$rowSpan==6){
                         //4th point
                         $strLatLong=strval($currentLat+($latPerRow*$rowSpan)).';'.strval($newlng);
                         array_push($apoints, $strLatLong);
                         $strLatLong=strval($currentLat+($latPerRow*($rowSpan-1))).';'.strval($newlng);
                         array_push($apoints, $strLatLong);
-                        $strLatLong=strval($currentLat+($latPerRow*($rowSpan-1))).';'.strval($originalLng);
-                        array_push($apoints, $strLatLong);
+                        if($rowSpan==2){
+                            $strLatLong=strval($currentLat+($latPerRow*($rowSpan-1))).';'.strval($originalLng);
+                            array_push($apoints, $strLatLong);
+                        }else{
+                            if($startedRight){
+                                //6th
+                                $strLatLong=strval($currentLat+($latPerRow*($rowSpan-1))).';'.strval($swlng);
+                                array_push($apoints, $strLatLong);
+                                //7th
+                                $strLatLong=strval($currentLat+($latPerRow*($rowSpan-3))).';'.strval($swlng);
+                                array_push($apoints, $strLatLong);
+                            }else{
+                                //6th
+                                $strLatLong=strval($currentLat+($latPerRow*($rowSpan-1))).';'.strval($nelng);
+                                array_push($apoints, $strLatLong);
+                                //7th
+                                $strLatLong=strval($currentLat+($latPerRow*($rowSpan-3))).';'.strval($nelng);
+                                array_push($apoints, $strLatLong);
+                            }
+                            //8th                    
+                            $strLatLong=strval($currentLat+($latPerRow*($rowSpan-3))).';'.strval($originalLng);                        
+                            array_push($apoints, $strLatLong);
+                        }
                     }else{
                         //4th point
                         $strLatLong=strval($currentLat+($latPerRow*($rowSpan-1))).';'.strval($newlng);
@@ -158,19 +179,19 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
                             //6th
                             $strLatLong=strval($currentLat+($latPerRow*($rowSpan))).';'.strval($swlng);
                             array_push($apoints, $strLatLong);
-                            //7th
-                            $strLatLong=strval($currentLat+($latPerRow*($rowSpan-2))).';'.strval($swlng);
+                            //7th                           
+                            $strLatLong=strval($currentLat+($latPerRow)).';'.strval($swlng);
                             array_push($apoints, $strLatLong);
                         }else{
                             //6th
                             $strLatLong=strval($currentLat+($latPerRow*($rowSpan))).';'.strval($nelng);
                             array_push($apoints, $strLatLong);
                             //7th
-                            $strLatLong=strval($currentLat+($latPerRow*($rowSpan-2))).';'.strval($nelng);
+                            $strLatLong=strval($currentLat+($latPerRow)).';'.strval($nelng);
                             array_push($apoints, $strLatLong);
                         }
                         //8th                    
-                        $strLatLong=strval($currentLat+($latPerRow*($rowSpan-2))).';'.strval($originalLng);                        
+                        $strLatLong=strval($currentLat+($latPerRow)).';'.strval($originalLng);                        
                         array_push($apoints, $strLatLong);
                         
                     }
@@ -183,7 +204,7 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
             }
         }
         $rowSpan++;
-        if($rowSpan>4){
+        if($rowSpan>9){
             break;
         }
         $currentRow++;
