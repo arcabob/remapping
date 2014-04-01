@@ -38,7 +38,7 @@ if (!$con)
 
 //get total population
 $sql="SELECT sum(pop10) as pop FROM censusPopulation where (intlat between ".$swlat." and ".$nelat.") and (intlong between ".$swlng." and ".$nelng.");";
-$handler->debug('sql', $sql);
+//$handler->debug('sql', $sql);
 $result = mysqli_query($con,$sql);
 if (!$result) {
     echo "Failed to select from MySQL: " . mysql_error();
@@ -81,9 +81,9 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
     
     while(!$filledRegion){
         if($movingRight){
-            $sql="SELECT pop10,intlong FROM censusPopulation where intlat between ".strval($currentLat+(($rowSpan-1)*$latPerRow))." and ".strval($currentLat+($rowSpan*$latPerRow))." and intlong > ".strval($currentLng)." and intlong < ".$nelng." order by intlong asc;";
+            $sql="SELECT pop10,intlong FROM censusPopulation where (intlat between ".strval($currentLat+(($rowSpan-1)*$latPerRow))." and ".strval($currentLat+($rowSpan*$latPerRow)).") and (intlong between ".strval($currentLng)." and ".$nelng.") order by intlong asc;";
         }else{
-            $sql="SELECT pop10,intlong FROM censusPopulation where intlat between ".strval($currentLat+(($rowSpan-1)*$latPerRow))." and ".strval($currentLat+($rowSpan*$latPerRow))." and intlong < ".strval($currentLng)." and intlong > ".$swlng." order by intlong desc;";
+            $sql="SELECT pop10,intlong FROM censusPopulation where (intlat between ".strval($currentLat+(($rowSpan-1)*$latPerRow))." and ".strval($currentLat+($rowSpan*$latPerRow)).") and (intlong between ".$swlng." and ".strval($currentLng).") order by intlong desc;";
         }
         //$handler->debug('sql', $sql);
         $result = mysqli_query($con,$sql);
@@ -94,10 +94,11 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
             $newPopPerRegion += $row['pop10'];
             $newlng=$row['intlong'];
             
-            if($newPopPerRegion>$popPerRegion || ((++$counter == $numResults) && $curRegion == ($totalRegionCount-1))){   
+            if($newPopPerRegion>$popPerRegion || ((++$counter == $numResults) && $curRegion == ($totalRegionCount-1) && $currentRow==$rowCount)){   
                 //set the final end to the end of the rectangle                
-                if($curRegion == ($totalRegionCount-1)){
-                    if($startedRight){
+                
+                if($curRegion == ($totalRegionCount-1) && $currentRow==$rowCount){
+                    if($movingRight){
                         $newlng = $nelng;
                     }else{
                         $newlng = $swlng;
