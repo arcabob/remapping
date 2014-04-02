@@ -18,8 +18,13 @@ and open the template in the editor.
             }
         </style>
         <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+        <script type="text/javascript" src="http://geoxml3.googlecode.com/svn/branches/polys/geoxml3.js"></script>
+        <script type="text/javascript" src="http://www.google.com/jsapi"></script>
         <script src="js/json2.js"></script>
         <script>
+            var geoXml = new geoXML3.parser();
+            var dynamicRect;
+            var layer;
             var rectangle;
             var map;
             var infoWindow;
@@ -29,6 +34,61 @@ and open the template in the editor.
             var xmlHTTPgetPOP;
             var xmlHTTPgetNewRegions;
             var mouseLatLng;
+            
+            google.load('visualization', '1', {'packages':['corechart', 'table', 'geomap']});
+
+            function switchState(layer){
+                
+                layer.setOptions({
+                    query: {
+                        select: 'geometry',
+                        from: '1OoBTpAqkASRRnJ_tsUOiswz06-0r2Nc9ncxQM68',
+                        where: "'State' = '" + document.getElementById('state').value + "'"
+                    }
+                  });
+                
+                
+                //try to create a poly
+                var queryText = encodeURIComponent("select 'geometry' from 1OoBTpAqkASRRnJ_tsUOiswz06-0r2Nc9ncxQM68 where 'State' = '" + document.getElementById('state').value + "'");
+                var query = new google.visualization.Query('http://www.google.com/fusiontables/gvizdata?tq='  + queryText);
+
+                //set the callback function
+                query.send(gotToState);
+                
+                
+            }
+            
+            function gotToState(response) {
+                if (!response) {
+                  alert('no response');
+                  return;
+                }
+                if (response.isError()) {
+                  alert('Error in query: ' + response.getMessage() + ' ' + response.getDetailedMessage());
+                  return;
+                } 
+                
+                FTresponse = response;
+                numRows = response.getDataTable().getNumberOfRows();
+                numCols = response.getDataTable().getNumberOfColumns();
+
+                var kml =  FTresponse.getDataTable().getValue(0,0);
+                // create a geoXml3 parser for the click handlers
+                
+                var geoXml = new geoXML3.parser({
+                    map: map,
+                    zoom: true
+                    });
+                geoXml.parseKmlString("<Placemark>" + kml + "</Placemark>");
+                geoXml.docs[0].gpolygons[0].setMap(null);
+                
+                rectangle.setBounds(geoXml.docs[0].gpolygons[0].bounds);
+                  
+                // zoom to the bounds
+                //map.fitBounds(bounds);
+                
+            }
+            
             
             function clearMap(){
                 for(var rectCount=0;rectCount<googleRectangles.length; rectCount++){
@@ -84,6 +144,8 @@ and open the template in the editor.
                 layer.setMap(map);
 
                 
+
+                
                 rectangle = new google.maps.Rectangle({
                     strokeColor: '#FFFFFF',
                     strokeOpacity: 0.8,
@@ -97,12 +159,20 @@ and open the template in the editor.
                     new google.maps.LatLng(42.511217, -87.508214))
                 });
                 
+                
                
                 // Add an event listener on the rectangle.
-                google.maps.event.addListener(rectangle, 'bounds_changed', showNewRect);
+                //google.maps.event.addListener(rectangle, 'bounds_changed', showNewRect);
                 infoWindow = new google.maps.InfoWindow();
+                google.maps.event.addDomListener(document.getElementById('state'),
+                    'change', function() {
+                      switchState(layer);
+                });
                 
             }
+            
+            
+
 
             function returnPopulation()
             {
@@ -230,9 +300,11 @@ and open the template in the editor.
                     
                     addClickListener(googleRectangles[i][0]);
                     
-                }
+                }                            
                 
             }
+            
+            
             
             function getNewRegions(){
                 var colCount = document.getElementById('colCount').value;
@@ -347,6 +419,61 @@ and open the template in the editor.
         <input type="button" value="Create Regions" onclick="distributeRect();" >        
         <input type="button" value="Setup New Regions" onclick="getNewRegions();" >
         <input type="checkbox" id="start" name="start" value="left">Start Bottom Left
+        &nbsp;&nbsp;State:
+        <select id="state">
+            
+            <option value="AL">AL</option>
+            <option value="AK">AK</option>
+            <option value="AZ">AZ</option>
+            <option value="AR">AR</option>
+            <option value="CA">CA</option>
+            <option value="CO">CO</option>
+            <option value="CT">CT</option>
+            <option value="DE">DE</option>
+            <option value="DC">DC</option>
+            <option value="FL">FL</option>
+            <option value="GA">GA</option>
+            <option value="HI">HI</option>
+            <option value="ID">ID</option>
+            <option value="IL" selected>IL</option>
+            <option value="IN">IN</option>
+            <option value="IA">IA</option>
+            <option value="KS">KS</option>
+            <option value="KY">KY</option>
+            <option value="LA">LA</option>
+            <option value="ME">ME</option>
+            <option value="MD">MD</option>
+            <option value="MA">MA</option>
+            <option value="MI">MI</option>
+            <option value="MN">MN</option>
+            <option value="MS">MS</option>
+            <option value="MO">MO</option>
+            <option value="MT">MT</option>
+            <option value="NE">NE</option>
+            <option value="NV">NV</option>
+            <option value="NH">NH</option>
+            <option value="NJ">NJ</option>
+            <option value="NM">NM</option>
+            <option value="NY">NY</option>
+            <option value="NC">NC</option>
+            <option value="ND">ND</option>
+            <option value="OH">OH</option>
+            <option value="OK">OK</option>
+            <option value="OR">OR</option>
+            <option value="PA">PA</option>
+            <option value="RI">RI</option>
+            <option value="SC">SC</option>
+            <option value="SD">SD</option>
+            <option value="TN">TN</option>
+            <option value="TX">TX</option>
+            <option value="UT">UT</option>
+            <option value="VT">VT</option>
+            <option value="VA">VA</option>
+            <option value="WA">WA</option>
+            <option value="WV">WV</option>
+            <option value="WI">WI</option>
+            <option value="WY">WY</option>            
+        </select>
         <div id="map-canvas"></div>
     </body>
 </html>
