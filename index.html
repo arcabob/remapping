@@ -310,11 +310,18 @@ and open the template in the editor.
                 var colCount = document.getElementById('colCount').value;
                 var rowCount = document.getElementById('rowCount').value;
                 var strStart = document.getElementById("start").checked;
+                var strTop = document.getElementById("top").checked;
                 
                 var ne = rectangle.getBounds().getNorthEast();
                 var sw = rectangle.getBounds().getSouthWest();
+                
+                if(strTop){
+                    xmlHTTPgetNewRegions.open("GET","getNewRegionsNS.php?start="+strStart+"&colCount="+colCount+"&rowCount="+rowCount+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);
+                }else{
+                    xmlHTTPgetNewRegions.open("GET","getNewRegionsEW.php?start="+strStart+"&colCount="+colCount+"&rowCount="+rowCount+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);
+                }
                     
-                xmlHTTPgetNewRegions.open("GET","getNewRegions.php?start="+strStart+"&colCount="+colCount+"&rowCount="+rowCount+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);
+                
                 xmlHTTPgetNewRegions.send();
                    
             }
@@ -414,11 +421,21 @@ and open the template in the editor.
             <option value="7">7</option>
             <option value="8">8</option>
             <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
         </select>
         
         <input type="button" value="Create Regions" onclick="distributeRect();" >        
         <input type="button" value="Setup New Regions" onclick="getNewRegions();" >
-        <input type="checkbox" id="start" name="start" value="left">Start Bottom Left
+        <input type="checkbox" id="start" name="start" value="left">Start Left&nbsp;
+        <input type="checkbox" id="top" name="top" value="top">Start Top&nbsp;
         &nbsp;&nbsp;State:
         <select id="state">
             
