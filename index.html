@@ -39,6 +39,7 @@ and open the template in the editor.
 
             function switchState(layer){
                 
+                clearMap();
                 layer.setOptions({
                     query: {
                         select: 'geometry',
@@ -309,6 +310,7 @@ and open the template in the editor.
             function getNewRegions(){
                 var colCount = document.getElementById('colCount').value;
                 var rowCount = document.getElementById('rowCount').value;
+                var strState = document.getElementById('state').value;
                 var strStart = document.getElementById("start").checked;
                 var strTop = document.getElementById("top").checked;
                 
@@ -316,9 +318,9 @@ and open the template in the editor.
                 var sw = rectangle.getBounds().getSouthWest();
                 
                 if(strTop){
-                    xmlHTTPgetNewRegions.open("GET","getNewRegionsNS.php?start="+strStart+"&colCount="+colCount+"&rowCount="+rowCount+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);
+                    xmlHTTPgetNewRegions.open("GET","getNewRegionsNS.php?state="+strState+"&start="+strStart+"&colCount="+colCount+"&rowCount="+rowCount+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);
                 }else{
-                    xmlHTTPgetNewRegions.open("GET","getNewRegionsEW.php?start="+strStart+"&colCount="+colCount+"&rowCount="+rowCount+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);
+                    xmlHTTPgetNewRegions.open("GET","getNewRegionsEW.php?state="+strState+"&start="+strStart+"&colCount="+colCount+"&rowCount="+rowCount+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);
                 }
                     
                 

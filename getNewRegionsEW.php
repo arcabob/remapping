@@ -9,6 +9,7 @@ $handler->getConnector()->setSourcesBasePath($_SERVER['DOCUMENT_ROOT']); // so f
 
 //Get all vars passed
 $strStart = $_GET['start'];
+$strState = $_GET['state'];
 $colCount = intval($_GET['colCount']);
 $rowCount = intval($_GET['rowCount']);
 $swlat = number_format($_GET['swlat'],10);
@@ -37,7 +38,8 @@ if (!$con)
 }
 
 //get total population
-$sql="SELECT sum(pop10) as pop FROM censusPopulation where (intlat between ".$swlat." and ".$nelat.") and (intlong between ".$swlng." and ".$nelng.");";
+//$sql="SELECT sum(pop10) as pop FROM censusPopulation where (intlat between ".$swlat." and ".$nelat.") and (intlong between ".$swlng." and ".$nelng.");";
+$sql="SELECT sum(DP0010001) as pop FROM censusPopulationWithBreakout where (statechar = '".$strState."') and (INTPTLAT10 between ".$swlat." and ".$nelat.") and (INTPTLON10 between ".$swlng." and ".$nelng.");";
 //$handler->debug('sql', $sql);
 $result = mysqli_query($con,$sql);
 if (!$result) {
@@ -81,9 +83,9 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
     
     while(!$filledRegion){
         if($movingRight){
-            $sql="SELECT pop10,intlong FROM censusPopulation where (intlat between ".strval($currentLat+(($rowSpan-1)*$latPerRow))." and ".strval($currentLat+($rowSpan*$latPerRow)).") and (intlong between ".strval($currentLng)." and ".$nelng.") order by intlong asc;";
+            $sql="SELECT DP0010001,INTPTLON10 FROM censusPopulationWithBreakout where (statechar = '".$strState."') and (INTPTLAT10 between ".strval($currentLat+(($rowSpan-1)*$latPerRow))." and ".strval($currentLat+($rowSpan*$latPerRow)).") and (INTPTLON10 between ".strval($currentLng)." and ".$nelng.") order by INTPTLON10 asc;";
         }else{
-            $sql="SELECT pop10,intlong FROM censusPopulation where (intlat between ".strval($currentLat+(($rowSpan-1)*$latPerRow))." and ".strval($currentLat+($rowSpan*$latPerRow)).") and (intlong between ".$swlng." and ".strval($currentLng).") order by intlong desc;";
+            $sql="SELECT DP0010001,INTPTLON10 FROM censusPopulationWithBreakout where (statechar = '".$strState."') and (INTPTLAT10 between ".strval($currentLat+(($rowSpan-1)*$latPerRow))." and ".strval($currentLat+($rowSpan*$latPerRow)).") and (INTPTLON10 between ".$swlng." and ".strval($currentLng).") order by INTPTLON10 desc;";
         }
         //$handler->debug('sql', $sql);
         $result = mysqli_query($con,$sql);
@@ -91,8 +93,8 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
         $counter = 0;
         while($row = mysqli_fetch_array($result))
         {
-            $newPopPerRegion += $row['pop10'];
-            $newlng=$row['intlong'];
+            $newPopPerRegion += $row['DP0010001'];
+            $newlng=$row['INTPTLON10'];
             
             if($newPopPerRegion>$popPerRegion || ((++$counter == $numResults) && $curRegion == ($totalRegionCount-1) && $currentRow==$rowCount)){   
                 //set the final end to the end of the rectangle                
