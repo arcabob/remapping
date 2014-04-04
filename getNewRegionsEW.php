@@ -95,6 +95,11 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
         {
             $newPopPerRegion += $row['DP0010001'];
             $newlng=$row['INTPTLON10'];
+            if($newPopPerRegion>$popPerRegion && $curRegion == ($totalRegionCount-1)){
+                if($currentRow!=$rowCount){
+                    $newPopPerRegion=$popPerRegion-1;
+                }
+            }
             
             if($newPopPerRegion>$popPerRegion || ((++$counter == $numResults) && $curRegion == ($totalRegionCount-1) && $currentRow==$rowCount)){   
                 //set the final end to the end of the rectangle                
