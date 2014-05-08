@@ -332,8 +332,9 @@ and open the template in the editor.
                 google.maps.event.addListener(rectObj.rect, 'click', function() {
                     var ne = rectObj.rect.getBounds().getNorthEast();
                     var sw = rectObj.rect.getBounds().getSouthWest();
+                    var strState = document.getElementById('state').value;
                     
-                    xmlHTTPgetPOP.open("GET","getPop.php?indexRect="+rectObj.pop+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);    
+                    xmlHTTPgetPOP.open("GET","getPop.php?indexRect="+rectObj.pop+"&state="+strState+"&swlat="+sw.lat()+"&swlng="+sw.lng()+"&nelat="+ne.lat()+"&nelng="+ne.lng(),true);    
                     xmlHTTPgetPOP.send();
                    
                 });
