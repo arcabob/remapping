@@ -173,7 +173,7 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
             }
         }
         $rowSpan++;
-        if($rowSpan>9){
+        if($rowSpan>20){
             break;
         }
         $currentRow++;

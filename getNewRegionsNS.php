@@ -169,7 +169,7 @@ for($curRegion=0; $curRegion < $totalRegionCount;$curRegion++){
             }
         }
         $colSpan++;
-        if($colSpan>9){
+        if($colSpan>20){
             break;
         }
         $currentCol++;
